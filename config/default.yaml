@@ -1,0 +1,3 @@
+database_url: sqlite:///promptguard.db
+max_concurrency: 3
+default_timeout: 30

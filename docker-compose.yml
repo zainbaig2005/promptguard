@@ -1,0 +1,8 @@
+services:
+  promptguard:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./promptguard.db:/app/promptguard.db
+      - ./evidence:/app/evidence

@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "promptguard"
+version = "0.1.0"
+description = "Authorized LLM security validation framework with OWASP LLM Top 10 mapping."
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [{name = "PromptGuard contributors"}]
+dependencies = [
+  "streamlit>=1.36",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "SQLAlchemy>=2.0",
+  "httpx>=0.27",
+  "pandas>=2.2",
+  "plotly>=5.22",
+  "Jinja2>=3.1",
+  "python-dotenv>=1.0",
+  "typer>=0.12",
+  "rich>=13.7",
+  "PyYAML>=6.0",
+  "jsonschema>=4.22",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2", "pytest-asyncio>=0.23", "ruff>=0.5", "mypy>=1.10", "pre-commit>=3.7", "pytest-cov>=5.0"]
+
+[project.scripts]
+promptguard = "promptguard.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["promptguard*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["tools/scaffold_promptguard.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S"]
+ignore = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unused_ignores = true
+exclude = ["tools/"]
+
+[[tool.mypy.overrides]]
+module = ["yaml", "jsonschema", "pandas", "plotly", "plotly.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["promptguard.dashboard.*"]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

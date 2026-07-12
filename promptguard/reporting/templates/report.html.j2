@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PromptGuard Report {{ run.id }}</title>
+  <style>
+    body { font-family: Inter, Arial, sans-serif; margin: 2rem; color: #15202b; }
+    h1, h2 { color: #102a43; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d9e2ec; padding: .55rem; text-align: left; vertical-align: top; }
+    th { background: #f0f4f8; }
+    .notice { background: #fff7d6; border: 1px solid #f0c36d; padding: .75rem; }
+  </style>
+</head>
+<body>
+  <h1>PromptGuard Security Validation Report</h1>
+  <p class="notice">This report is not a certification. Automated testing cannot prove the absence of vulnerabilities. Some OWASP categories require architecture and process review.</p>
+  <h2>Executive Summary</h2>
+  <p>Run {{ run.id }} tested target {{ run.target_id }} using suite {{ run.suite_id }}.</p>
+  <ul>
+    <li>Total tests: {{ metrics.total }}</li>
+    <li>Pass rate: {{ metrics.pass_rate }}%</li>
+    <li>Failed: {{ metrics.failed }}</li>
+    <li>Manual review: {{ metrics.manual_review }}</li>
+  </ul>
+  <h2>Detailed Results</h2>
+  <table>
+    <tr><th>Test</th><th>Category</th><th>Outcome</th><th>Severity</th><th>Evidence</th><th>Reasoning</th></tr>
+    {% for result in run.results %}
+    <tr>
+      <td>{{ result.test_id }}</td>
+      <td>{{ result.owasp_category }}</td>
+      <td>{{ result.outcome }}</td>
+      <td>{{ result.severity }}</td>
+      <td><pre>{{ result.redacted_response }}</pre></td>
+      <td>{{ result.evaluator_reasoning }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
