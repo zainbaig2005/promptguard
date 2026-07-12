@@ -66,6 +66,13 @@ promptguard dry-run --target authorized-openai-compatible
 promptguard run --target authorized-openai-compatible --yes
 ```
 
+Free-tier APIs often have strict rate limits. Start with the smaller smoke suite and concurrency of 1:
+
+```bash
+promptguard dry-run --suite gemini-smoke --target gemini-free
+promptguard run --suite gemini-smoke --target gemini-free --concurrency 1 --yes
+```
+
 Use this only for systems you own or have explicit permission to test. Do not commit `config/targets.yaml`
 or `.env`; both are ignored by default.
 

@@ -27,6 +27,21 @@ def session_factory() -> sessionmaker[Session]:
     return init_database(get_settings().database_url)
 
 
+def resolve_suite(suite: str) -> Path:
+    candidate = Path(suite)
+    if candidate.exists():
+        return candidate
+    suites_dir = Path("data/test_suites")
+    for suite_file in sorted(suites_dir.glob("*.yaml")):
+        loaded = load_suite(suite_file)
+        if loaded.id == suite:
+            return suite_file
+    slug_candidate = suites_dir / f"{suite.replace('-', '_')}.yaml"
+    if slug_candidate.exists():
+        return slug_candidate
+    raise typer.BadParameter(f"Unknown suite '{suite}'. Run 'promptguard list-suites' to see available suites.")
+
+
 @app.command()
 def init() -> None:
     init_database(get_settings().database_url)
@@ -74,7 +89,7 @@ def list_targets() -> None:
 
 @app.command("dry-run")
 def dry_run(suite: str = "owasp-2025-starter", target: str = "local-mock-mixed") -> None:
-    test_suite = load_suite(Path("data/test_suites/owasp_2025_starter.yaml"))
+    test_suite = load_suite(resolve_suite(suite))
     summary = asyncio.run(
         ExecutionEngine(session_factory()).run_suite(
             test_suite, target_by_id(target), authorization_confirmed=True, dry_run=True
@@ -87,13 +102,16 @@ def dry_run(suite: str = "owasp-2025-starter", target: str = "local-mock-mixed")
 def run(
     suite: str = "owasp-2025-starter",
     target: str = "local-mock-mixed",
+    concurrency: int = typer.Option(1, "--concurrency", min=1, max=10, help="Maximum concurrent target requests."),
     yes: bool = typer.Option(False, "--yes", help="Confirm authorization."),
 ) -> None:
     if not yes:
         raise typer.BadParameter("Pass --yes to confirm you are authorized to test this target.")
-    test_suite = load_suite(Path("data/test_suites/owasp_2025_starter.yaml"))
+    test_suite = load_suite(resolve_suite(suite))
     summary = asyncio.run(
-        ExecutionEngine(session_factory()).run_suite(test_suite, target_by_id(target), authorization_confirmed=True)
+        ExecutionEngine(session_factory(), max_concurrency=concurrency).run_suite(
+            test_suite, target_by_id(target), authorization_confirmed=True
+        )
     )
     console.print(
         f"[green]{summary.run_id}[/green] completed: {summary.passed} passed, "
