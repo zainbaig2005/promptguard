@@ -34,6 +34,16 @@ st.markdown(
       --pg-primary-soft: #d9f3ef;
     }
     .stApp { background: #f4f7fa; color: var(--pg-ink); }
+    header[data-testid="stHeader"] {
+      height: 0 !important;
+      background: transparent !important;
+    }
+    header[data-testid="stHeader"] * { display: none !important; }
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"] {
+      display: none !important;
+    }
     [data-testid="stSidebar"] { background: #ffffff; border-right: 1px solid var(--pg-line); }
     [data-testid="stSidebar"] * { color: var(--pg-ink) !important; }
     [data-testid="stSidebar"] [role="radiogroup"] label {
@@ -75,13 +85,38 @@ st.markdown(
       padding: .8rem .9rem; box-shadow: 0 4px 18px rgba(16, 25, 35, .04);
     }
     div[data-testid="stDataFrame"] { border: 1px solid var(--pg-line); border-radius: 8px; overflow: hidden; }
+    label,
+    [data-testid="stWidgetLabel"] p {
+      color: var(--pg-muted) !important;
+      font-weight: 650 !important;
+    }
     [data-baseweb="select"] > div,
     [data-baseweb="input"] > div,
     [data-baseweb="tag"] {
       border-radius: 6px !important;
     }
     [data-baseweb="select"] > div {
-      background: #ffffff !important; border-color: var(--pg-line) !important;
+      background-color: #ffffff !important;
+      border: 1px solid var(--pg-line) !important;
+      color: var(--pg-ink) !important;
+      box-shadow: none !important;
+      min-height: 44px;
+    }
+    [data-baseweb="select"] span,
+    [data-baseweb="select"] input {
+      color: var(--pg-ink) !important;
+    }
+    [data-baseweb="select"] svg {
+      color: var(--pg-muted) !important;
+      fill: var(--pg-muted) !important;
+    }
+    [data-baseweb="popover"] [role="listbox"],
+    [data-baseweb="popover"] [role="option"] {
+      background-color: #ffffff !important;
+      color: var(--pg-ink) !important;
+    }
+    [data-baseweb="popover"] [role="option"]:hover {
+      background-color: var(--pg-soft) !important;
     }
     .stButton > button, .stDownloadButton > button {
       border-radius: 6px; border: 1px solid var(--pg-primary); background: var(--pg-primary); color: #fff;
@@ -162,10 +197,25 @@ def style_figure(fig):
         title={"font": {"color": "#0d1821", "size": 16}, "x": 0.02, "xanchor": "left"},
         margin={"l": 40, "r": 24, "t": 58, "b": 42},
         legend_title_text="",
+        legend={"font": {"color": "#475569"}},
         height=390,
     )
-    fig.update_xaxes(gridcolor="#eef2f6", linecolor="#d8e0e8", zerolinecolor="#d8e0e8")
-    fig.update_yaxes(gridcolor="#eef2f6", linecolor="#d8e0e8", zerolinecolor="#d8e0e8")
+    axis_text = {"color": "#475569"}
+    fig.update_xaxes(
+        gridcolor="#eef2f6",
+        linecolor="#d8e0e8",
+        zerolinecolor="#d8e0e8",
+        tickfont=axis_text,
+        title_font=axis_text,
+    )
+    fig.update_yaxes(
+        gridcolor="#eef2f6",
+        linecolor="#d8e0e8",
+        zerolinecolor="#d8e0e8",
+        tickfont=axis_text,
+        title_font=axis_text,
+    )
+    fig.update_traces(marker_line_width=0)
     return fig
 
 
