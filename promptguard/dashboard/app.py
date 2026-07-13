@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+from html import escape
 from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
+import plotly.io as pio
 import streamlit as st
 from sqlalchemy import select
 
@@ -20,13 +22,92 @@ from promptguard.test_loader import load_suite, load_suites
 
 st.set_page_config(page_title="PromptGuard", page_icon="PG", layout="wide")
 st.markdown(
-    "<style>"
-    ".pg-wordmark{font-size:1.7rem;font-weight:800;color:#102a43}"
-    ".badge{padding:.15rem .45rem;border-radius:.35rem;background:#e6f6ff}"
-    "</style>",
+    """
+    <style>
+    :root {
+      --pg-ink: #0d1821;
+      --pg-muted: #5f6f7c;
+      --pg-line: #d8e0e8;
+      --pg-soft: #f5f8fb;
+      --pg-panel: #ffffff;
+      --pg-teal: #02a6a1;
+      --pg-green: #2da44e;
+      --pg-amber: #b7791f;
+      --pg-red: #cf222e;
+      --pg-blue: #1f6feb;
+    }
+    .stApp { background: linear-gradient(180deg, #f7fafc 0%, #eef4f8 100%); color: var(--pg-ink); }
+    [data-testid="stSidebar"] { background: #101923; border-right: 1px solid #243243; }
+    [data-testid="stSidebar"] * { color: #e6edf3 !important; }
+    [data-testid="stSidebar"] [role="radiogroup"] label {
+      border-radius: 6px; padding: .35rem .5rem; margin: .1rem 0;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label:hover { background: #182536; }
+    .block-container { padding-top: 1.35rem; padding-bottom: 3rem; max-width: 1440px; }
+    .pg-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .75rem 0 1.1rem; border-bottom: 1px solid var(--pg-line); margin-bottom: 1.1rem;
+    }
+    .pg-brand { display: flex; align-items: center; gap: .7rem; }
+    .pg-logo {
+      width: 34px; height: 34px; display: grid; place-items: center; border-radius: 7px;
+      background: linear-gradient(135deg, #102033, #02a6a1); color: white; font-weight: 800;
+      letter-spacing: 0;
+    }
+    .pg-wordmark { font-size: 1.35rem; font-weight: 800; color: var(--pg-ink); letter-spacing: 0; }
+    .pg-subtle { color: var(--pg-muted); font-size: .86rem; }
+    .pg-header { margin: .85rem 0 1.15rem; }
+    .pg-kicker { color: var(--pg-teal); font-size: .78rem; font-weight: 800; text-transform: uppercase; }
+    .pg-title { color: var(--pg-ink); font-size: 1.85rem; line-height: 1.15; font-weight: 800; margin-top: .2rem; }
+    .pg-card {
+      background: var(--pg-panel); border: 1px solid var(--pg-line); border-radius: 8px;
+      padding: 1rem 1rem .85rem; box-shadow: 0 10px 28px rgba(16, 25, 35, .06);
+    }
+    .pg-metric-label { color: var(--pg-muted); font-size: .76rem; font-weight: 800; text-transform: uppercase; }
+    .pg-metric-value { color: var(--pg-ink); font-size: 1.55rem; line-height: 1.35; font-weight: 850; }
+    .pg-metric-accent {
+      width: 34px; height: 3px; border-radius: 999px; margin-top: .55rem; background: var(--pg-teal);
+    }
+    .pg-metric-accent.red { background: var(--pg-red); }
+    .pg-metric-accent.amber { background: var(--pg-amber); }
+    .pg-metric-accent.blue { background: var(--pg-blue); }
+    .pg-metric-accent.green { background: var(--pg-green); }
+    .pg-callout {
+      background: #fff; border: 1px solid var(--pg-line); border-left: 4px solid var(--pg-teal);
+      border-radius: 7px; padding: .85rem 1rem; color: var(--pg-muted);
+    }
+    div[data-testid="stDataFrame"] { border: 1px solid var(--pg-line); border-radius: 8px; overflow: hidden; }
+    .stButton > button, .stDownloadButton > button {
+      border-radius: 6px; border: 1px solid #0f766e; background: #0f766e; color: #fff; font-weight: 750;
+    }
+    .stButton > button:hover, .stDownloadButton > button:hover {
+      border-color: #0b5e58; background: #0b5e58; color: #fff;
+    }
+    .stButton > button:disabled { background: #d8e0e8; border-color: #d8e0e8; color: #607080; }
+    </style>
+    """,
     unsafe_allow_html=True,
 )
-st.markdown('<div class="pg-wordmark">PromptGuard</div>', unsafe_allow_html=True)
+
+pio.templates["promptguard"] = pio.templates["plotly_white"]
+pio.templates["promptguard"].layout.colorway = ["#02a6a1", "#cf222e", "#b7791f", "#1f6feb", "#2da44e", "#6f42c1"]
+pio.templates.default = "promptguard"
+
+st.markdown(
+    """
+    <div class="pg-topbar">
+      <div class="pg-brand">
+        <div class="pg-logo">PG</div>
+        <div>
+          <div class="pg-wordmark">PromptGuard</div>
+          <div class="pg-subtle">AI security validation dashboard</div>
+        </div>
+      </div>
+      <div class="pg-subtle">OWASP LLM 2025 mapped</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 settings = get_settings()
 SessionFactory = init_database(settings.database_url)
@@ -39,6 +120,31 @@ def query_all(model):
 
 def available_suites() -> list[TestSuite]:
     return load_suites(Path("data/test_suites"))
+
+
+def page_header(title: str, kicker: str = "PromptGuard") -> None:
+    st.markdown(
+        f"""
+        <div class="pg-header">
+          <div class="pg-kicker">{escape(kicker)}</div>
+          <div class="pg-title">{escape(title)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def metric_card(label: str, value: object, accent: str = "") -> None:
+    st.markdown(
+        f"""
+        <div class="pg-card">
+          <div class="pg-metric-label">{escape(label)}</div>
+          <div class="pg-metric-value">{escape(str(value))}</div>
+          <div class="pg-metric-accent {escape(accent)}"></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 page = st.sidebar.radio(
@@ -57,15 +163,23 @@ page = st.sidebar.radio(
 )
 
 if page == "Overview":
-    st.header("Security Validation Overview")
+    page_header("Security Validation Overview", "Executive view")
     runs = query_all(TestRunRecord)
     results = query_all(TestResultRecord)
     findings = query_all(FindingRecord)
     metrics = summarize_results(results)
     cols = st.columns(6)
-    labels = ["total", "pass_rate", "failed", "manual_review", "errors", "estimated_cost"]
-    for col, label in zip(cols, labels, strict=False):
-        col.metric(label.replace("_", " ").title(), metrics[label])
+    cards = [
+        ("Total Results", metrics["total"], "blue"),
+        ("Pass Rate", f"{metrics['pass_rate']}%", "green"),
+        ("Failed", metrics["failed"], "red"),
+        ("Manual Review", metrics["manual_review"], "amber"),
+        ("Errors", metrics["errors"], "red"),
+        ("Estimated Cost", f"${metrics['estimated_cost']}", ""),
+    ]
+    for col, (label, value, accent) in zip(cols, cards, strict=False):
+        with col:
+            metric_card(label, value, accent)
     if results:
         df = pd.DataFrame(
             [
@@ -81,18 +195,21 @@ if page == "Overview":
         )
         left, right = st.columns(2)
         left.plotly_chart(
-            px.histogram(df, x="category", color="outcome", title="Outcomes by Category"), use_container_width=True
+            px.histogram(df, x="category", color="outcome", title="Outcomes by Category"), width="stretch"
         )
-        right.plotly_chart(px.histogram(df, x="severity", title="Findings by Severity"), use_container_width=True)
-        st.plotly_chart(px.box(df, x="category", y="latency", title="Latency Distribution"), use_container_width=True)
+        right.plotly_chart(px.histogram(df, x="severity", title="Findings by Severity"), width="stretch")
+        st.plotly_chart(px.box(df, x="category", y="latency", title="Latency Distribution"), width="stretch")
     else:
-        st.info("No results yet. Use Seed Demo or run the starter suite against a local mock target.")
+        st.markdown(
+            '<div class="pg-callout">No results recorded yet. Seed demo data or run an authorized suite.</div>',
+            unsafe_allow_html=True,
+        )
     if st.button("Seed Demo Data"):
         seed_demo_sync()
         st.rerun()
 
 elif page == "Run Tests":
-    st.header("Run Tests")
+    page_header("Run Tests", "Authorized execution")
     suites = available_suites()
     suite_by_id = {suite.id: suite for suite in suites}
     suite_id = st.selectbox(
@@ -101,18 +218,21 @@ elif page == "Run Tests":
         index=list(suite_by_id).index("gemini-smoke") if "gemini-smoke" in suite_by_id else 0,
     )
     suite = suite_by_id[suite_id]
-    target_id = st.selectbox("Target", [target.id for target in all_targets()])
-    categories = st.multiselect("OWASP categories", sorted({test.owasp_category.value for test in suite.tests}))
-    severity = st.multiselect("Severity", sorted({test.severity.value for test in suite.tests}))
-    concurrency = st.slider("Concurrency", 1, 10, settings.max_concurrency)
-    dry_run = st.checkbox("Dry run")
+    left, right = st.columns([1.15, 1])
+    with left:
+        target_id = st.selectbox("Target", [target.id for target in all_targets()])
+        categories = st.multiselect("OWASP categories", sorted({test.owasp_category.value for test in suite.tests}))
+        severity = st.multiselect("Severity", sorted({test.severity.value for test in suite.tests}))
+    with right:
+        concurrency = st.slider("Concurrency", 1, 10, 1 if target_id == "gemini-free" else settings.max_concurrency)
+        dry_run = st.checkbox("Dry run")
     selected = [
         test
         for test in suite.tests
         if (not categories or test.owasp_category.value in categories)
         and (not severity or test.severity.value in severity)
     ]
-    st.metric("Selected tests", len(selected))
+    metric_card("Selected Tests", len(selected), "blue")
     authorized = st.checkbox("I confirm I am authorized to test this target.")
     if st.button("Start Execution", disabled=not authorized):
         engine = ExecutionEngine(SessionFactory, max_concurrency=concurrency)
@@ -135,7 +255,7 @@ elif page == "Run Tests":
             st.success(f"{summary.run_id}: {summary.status.value}, {summary.total_tests} tests")
 
 elif page == "Runs":
-    st.header("Runs")
+    page_header("Runs", "Run history")
     runs = query_all(TestRunRecord)
     if runs:
         df = pd.DataFrame(
@@ -151,7 +271,7 @@ elif page == "Runs":
                 for r in runs
             ]
         )
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
         ids = df["id"].tolist()
         if len(ids) >= 2:
             a, b = st.selectbox("Baseline", ids), st.selectbox("Current", ids, index=1)
@@ -163,7 +283,7 @@ elif page == "Runs":
         st.info("No runs recorded.")
 
 elif page == "Run Details":
-    st.header("Run Details")
+    page_header("Run Details", "Evidence review")
     runs = query_all(TestRunRecord)
     run_id = st.selectbox("Run", [run.id for run in runs] or [""])
     if run_id:
@@ -183,10 +303,10 @@ elif page == "Run Details":
                 }
                 for r in run.results
             ]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 
 elif page == "Findings":
-    st.header("Findings")
+    page_header("Findings", "Open risk view")
     findings = query_all(FindingRecord)
     st.dataframe(
         pd.DataFrame(
@@ -203,12 +323,12 @@ elif page == "Findings":
                 for f in findings
             ]
         ),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
 elif page == "Test Library":
-    st.header("Test Library")
+    page_header("Test Library", "Test catalog")
     suites = available_suites()
     suite_by_id = {suite.id: suite for suite in suites}
     suite = suite_by_id[st.selectbox("Suite", list(suite_by_id))]
@@ -218,7 +338,7 @@ elif page == "Test Library":
         for test in suite.tests
         if not search or search.lower() in (test.id + test.name + test.description).lower()
     ]
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
     st.download_button(
         "Download test template",
         data=suite.tests[0].model_dump_json(indent=2),
@@ -226,16 +346,16 @@ elif page == "Test Library":
     )
 
 elif page == "Targets":
-    st.header("Targets")
+    page_header("Targets", "Configured systems")
     st.caption("Secret values are referenced by environment variable name only and are never shown here.")
     st.dataframe(
         pd.DataFrame([target.model_dump(mode="json") for target in all_targets()]),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
 elif page == "Architecture Review":
-    st.header("Architecture Review")
+    page_header("Architecture Review", "Questionnaires")
     suite = load_suite(Path("data/test_suites/owasp_2025_starter.yaml"))
     review_items = [test for test in suite.tests if test.assessment_mode.value == "architecture_review"]
     for item in review_items:
@@ -245,7 +365,7 @@ elif page == "Architecture Review":
             st.text_area("Remediation notes", key=item.id + "-remediation")
 
 elif page == "Settings":
-    st.header("Settings")
+    page_header("Settings", "Runtime configuration")
     st.write(settings.model_dump())
     st.warning(
         "Evidence storage can contain sensitive target output. External target raw storage is disabled by default."
