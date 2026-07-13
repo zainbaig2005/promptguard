@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from promptguard.config import get_settings
 from promptguard.demo import seed_demo_sync
+from promptguard.exceptions import PromptGuardError
 from promptguard.execution.engine import ExecutionEngine
 from promptguard.models.schemas import TestSuite
 from promptguard.repositories.database import FindingRecord, TestResultRecord, TestRunRecord, init_database
@@ -115,16 +116,23 @@ elif page == "Run Tests":
     authorized = st.checkbox("I confirm I am authorized to test this target.")
     if st.button("Start Execution", disabled=not authorized):
         engine = ExecutionEngine(SessionFactory, max_concurrency=concurrency)
-        summary = asyncio.run(
-            engine.run_suite(
-                suite,
-                target_by_id(target_id),
-                authorization_confirmed=True,
-                dry_run=dry_run,
-                category_filter=set(categories) if categories else None,
+        try:
+            summary = asyncio.run(
+                engine.run_suite(
+                    suite,
+                    target_by_id(target_id),
+                    authorization_confirmed=True,
+                    dry_run=dry_run,
+                    category_filter=set(categories) if categories else None,
+                )
             )
-        )
-        st.success(f"{summary.run_id}: {summary.status.value}, {summary.total_tests} tests")
+        except PromptGuardError as exc:
+            st.error(str(exc))
+            st.info(
+                "Set the required API key in the terminal before starting Streamlit, or add it to a local .env file."
+            )
+        else:
+            st.success(f"{summary.run_id}: {summary.status.value}, {summary.total_tests} tests")
 
 elif page == "Runs":
     st.header("Runs")
