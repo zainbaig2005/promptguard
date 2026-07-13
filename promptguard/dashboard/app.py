@@ -166,8 +166,43 @@ if page == "Overview":
     page_header("Security Validation Overview", "Executive view")
     runs = query_all(TestRunRecord)
     results = query_all(TestResultRecord)
-    findings = query_all(FindingRecord)
-    metrics = summarize_results(results)
+    runs_desc = sorted(runs, key=lambda run: run.start_time, reverse=True)
+    target_options = ["All targets", *sorted({run.target_id for run in runs_desc})]
+    suite_options = ["All suites", *sorted({run.suite_id for run in runs_desc})]
+    filter_cols = st.columns([1.1, 1.1, 1.2, 1.4])
+    with filter_cols[0]:
+        selected_target = st.selectbox("Target filter", target_options)
+    with filter_cols[1]:
+        selected_suite = st.selectbox("Suite filter", suite_options)
+
+    matching_runs = [
+        run
+        for run in runs_desc
+        if (selected_target == "All targets" or run.target_id == selected_target)
+        and (selected_suite == "All suites" or run.suite_id == selected_suite)
+    ]
+    with filter_cols[2]:
+        run_scope = st.selectbox("Run scope", ["Latest matching run", "All matching runs", "Specific run"])
+    with filter_cols[3]:
+        selected_run_id = ""
+        if run_scope == "Specific run" and matching_runs:
+            selected_run_id = st.selectbox("Run", [run.id for run in matching_runs])
+        elif matching_runs:
+            st.selectbox("Run", [matching_runs[0].id], disabled=True)
+        else:
+            st.selectbox("Run", ["No matching runs"], disabled=True)
+
+    if run_scope == "Latest matching run":
+        active_runs = matching_runs[:1]
+    elif run_scope == "Specific run":
+        active_runs = [run for run in matching_runs if run.id == selected_run_id]
+    else:
+        active_runs = matching_runs
+
+    active_run_ids = {run.id for run in active_runs}
+    filtered_results = [result for result in results if result.run_id in active_run_ids]
+    metrics = summarize_results(filtered_results)
+    st.caption(f"Showing {len(filtered_results)} result(s) from {len(active_runs)} run(s).")
     cols = st.columns(6)
     cards = [
         ("Total Results", metrics["total"], "blue"),
@@ -180,7 +215,7 @@ if page == "Overview":
     for col, (label, value, accent) in zip(cols, cards, strict=False):
         with col:
             metric_card(label, value, accent)
-    if results:
+    if filtered_results:
         df = pd.DataFrame(
             [
                 {
@@ -190,7 +225,7 @@ if page == "Overview":
                     "latency": r.latency_ms,
                     "test": r.test_id,
                 }
-                for r in results
+                for r in filtered_results
             ]
         )
         left, right = st.columns(2)
