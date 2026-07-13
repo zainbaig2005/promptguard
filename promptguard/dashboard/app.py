@@ -30,19 +30,17 @@ st.markdown(
       --pg-line: #d8e0e8;
       --pg-soft: #f5f8fb;
       --pg-panel: #ffffff;
-      --pg-teal: #02a6a1;
-      --pg-green: #2da44e;
-      --pg-amber: #b7791f;
-      --pg-red: #cf222e;
-      --pg-blue: #1f6feb;
+      --pg-primary: #0f766e;
+      --pg-primary-soft: #d9f3ef;
     }
-    .stApp { background: linear-gradient(180deg, #f7fafc 0%, #eef4f8 100%); color: var(--pg-ink); }
-    [data-testid="stSidebar"] { background: #101923; border-right: 1px solid #243243; }
-    [data-testid="stSidebar"] * { color: #e6edf3 !important; }
+    .stApp { background: #f4f7fa; color: var(--pg-ink); }
+    [data-testid="stSidebar"] { background: #ffffff; border-right: 1px solid var(--pg-line); }
+    [data-testid="stSidebar"] * { color: var(--pg-ink) !important; }
     [data-testid="stSidebar"] [role="radiogroup"] label {
       border-radius: 6px; padding: .35rem .5rem; margin: .1rem 0;
     }
-    [data-testid="stSidebar"] [role="radiogroup"] label:hover { background: #182536; }
+    [data-testid="stSidebar"] [role="radiogroup"] label:hover { background: var(--pg-soft); }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: var(--pg-muted) !important; }
     .block-container { padding-top: 1.35rem; padding-bottom: 3rem; max-width: 1440px; }
     .pg-topbar {
       display: flex; align-items: center; justify-content: space-between;
@@ -51,34 +49,43 @@ st.markdown(
     .pg-brand { display: flex; align-items: center; gap: .7rem; }
     .pg-logo {
       width: 34px; height: 34px; display: grid; place-items: center; border-radius: 7px;
-      background: linear-gradient(135deg, #102033, #02a6a1); color: white; font-weight: 800;
+      background: var(--pg-primary); color: white; font-weight: 800;
       letter-spacing: 0;
     }
     .pg-wordmark { font-size: 1.35rem; font-weight: 800; color: var(--pg-ink); letter-spacing: 0; }
     .pg-subtle { color: var(--pg-muted); font-size: .86rem; }
     .pg-header { margin: .85rem 0 1.15rem; }
-    .pg-kicker { color: var(--pg-teal); font-size: .78rem; font-weight: 800; text-transform: uppercase; }
+    .pg-kicker { color: var(--pg-primary); font-size: .78rem; font-weight: 800; text-transform: uppercase; }
     .pg-title { color: var(--pg-ink); font-size: 1.85rem; line-height: 1.15; font-weight: 800; margin-top: .2rem; }
     .pg-card {
       background: var(--pg-panel); border: 1px solid var(--pg-line); border-radius: 8px;
-      padding: 1rem 1rem .85rem; box-shadow: 0 10px 28px rgba(16, 25, 35, .06);
+      padding: 1rem 1rem .85rem; box-shadow: 0 4px 18px rgba(16, 25, 35, .04);
     }
     .pg-metric-label { color: var(--pg-muted); font-size: .76rem; font-weight: 800; text-transform: uppercase; }
     .pg-metric-value { color: var(--pg-ink); font-size: 1.55rem; line-height: 1.35; font-weight: 850; }
     .pg-metric-accent {
-      width: 34px; height: 3px; border-radius: 999px; margin-top: .55rem; background: var(--pg-teal);
+      width: 34px; height: 3px; border-radius: 999px; margin-top: .55rem; background: var(--pg-primary);
     }
-    .pg-metric-accent.red { background: var(--pg-red); }
-    .pg-metric-accent.amber { background: var(--pg-amber); }
-    .pg-metric-accent.blue { background: var(--pg-blue); }
-    .pg-metric-accent.green { background: var(--pg-green); }
     .pg-callout {
-      background: #fff; border: 1px solid var(--pg-line); border-left: 4px solid var(--pg-teal);
+      background: #fff; border: 1px solid var(--pg-line); border-left: 4px solid var(--pg-primary);
       border-radius: 7px; padding: .85rem 1rem; color: var(--pg-muted);
     }
+    .pg-section-card {
+      background: var(--pg-panel); border: 1px solid var(--pg-line); border-radius: 8px;
+      padding: .8rem .9rem; box-shadow: 0 4px 18px rgba(16, 25, 35, .04);
+    }
     div[data-testid="stDataFrame"] { border: 1px solid var(--pg-line); border-radius: 8px; overflow: hidden; }
+    [data-baseweb="select"] > div,
+    [data-baseweb="input"] > div,
+    [data-baseweb="tag"] {
+      border-radius: 6px !important;
+    }
+    [data-baseweb="select"] > div {
+      background: #ffffff !important; border-color: var(--pg-line) !important;
+    }
     .stButton > button, .stDownloadButton > button {
-      border-radius: 6px; border: 1px solid #0f766e; background: #0f766e; color: #fff; font-weight: 750;
+      border-radius: 6px; border: 1px solid var(--pg-primary); background: var(--pg-primary); color: #fff;
+      font-weight: 750;
     }
     .stButton > button:hover, .stDownloadButton > button:hover {
       border-color: #0b5e58; background: #0b5e58; color: #fff;
@@ -90,7 +97,7 @@ st.markdown(
 )
 
 pio.templates["promptguard"] = pio.templates["plotly_white"]
-pio.templates["promptguard"].layout.colorway = ["#02a6a1", "#cf222e", "#b7791f", "#1f6feb", "#2da44e", "#6f42c1"]
+pio.templates["promptguard"].layout.colorway = ["#0f766e", "#6b7280", "#94a3b8", "#cbd5e1"]
 pio.templates.default = "promptguard"
 
 st.markdown(
@@ -140,11 +147,26 @@ def metric_card(label: str, value: object, accent: str = "") -> None:
         <div class="pg-card">
           <div class="pg-metric-label">{escape(label)}</div>
           <div class="pg-metric-value">{escape(str(value))}</div>
-          <div class="pg-metric-accent {escape(accent)}"></div>
+          <div class="pg-metric-accent"></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def style_figure(fig):
+    fig.update_layout(
+        paper_bgcolor="#ffffff",
+        plot_bgcolor="#ffffff",
+        font={"color": "#334155", "family": "Inter, Arial, sans-serif"},
+        title={"font": {"color": "#0d1821", "size": 16}, "x": 0.02, "xanchor": "left"},
+        margin={"l": 40, "r": 24, "t": 58, "b": 42},
+        legend_title_text="",
+        height=390,
+    )
+    fig.update_xaxes(gridcolor="#eef2f6", linecolor="#d8e0e8", zerolinecolor="#d8e0e8")
+    fig.update_yaxes(gridcolor="#eef2f6", linecolor="#d8e0e8", zerolinecolor="#d8e0e8")
+    return fig
 
 
 page = st.sidebar.radio(
@@ -205,11 +227,11 @@ if page == "Overview":
     st.caption(f"Showing {len(filtered_results)} result(s) from {len(active_runs)} run(s).")
     cols = st.columns(6)
     cards = [
-        ("Total Results", metrics["total"], "blue"),
-        ("Pass Rate", f"{metrics['pass_rate']}%", "green"),
-        ("Failed", metrics["failed"], "red"),
-        ("Manual Review", metrics["manual_review"], "amber"),
-        ("Errors", metrics["errors"], "red"),
+        ("Total Results", metrics["total"], ""),
+        ("Pass Rate", f"{metrics['pass_rate']}%", ""),
+        ("Failed", metrics["failed"], ""),
+        ("Manual Review", metrics["manual_review"], ""),
+        ("Errors", metrics["errors"], ""),
         ("Estimated Cost", f"${metrics['estimated_cost']}", ""),
     ]
     for col, (label, value, accent) in zip(cols, cards, strict=False):
@@ -229,11 +251,37 @@ if page == "Overview":
             ]
         )
         left, right = st.columns(2)
-        left.plotly_chart(
-            px.histogram(df, x="category", color="outcome", title="Outcomes by Category"), width="stretch"
+        outcome_colors = {
+            "passed": "#0f766e",
+            "failed": "#64748b",
+            "manual_review": "#94a3b8",
+            "error": "#cbd5e1",
+        }
+        severity_colors = {"high": "#0f766e", "medium": "#64748b", "low": "#94a3b8"}
+        outcome_fig = px.histogram(
+            df,
+            x="category",
+            color="outcome",
+            title="Outcomes by Category",
+            color_discrete_map=outcome_colors,
         )
-        right.plotly_chart(px.histogram(df, x="severity", title="Findings by Severity"), width="stretch")
-        st.plotly_chart(px.box(df, x="category", y="latency", title="Latency Distribution"), width="stretch")
+        severity_fig = px.histogram(
+            df,
+            x="severity",
+            color="severity",
+            title="Findings by Severity",
+            color_discrete_map=severity_colors,
+        )
+        latency_fig = px.box(
+            df,
+            x="category",
+            y="latency",
+            title="Latency Distribution",
+            color_discrete_sequence=["#0f766e"],
+        )
+        left.plotly_chart(style_figure(outcome_fig), width="stretch")
+        right.plotly_chart(style_figure(severity_fig), width="stretch")
+        st.plotly_chart(style_figure(latency_fig), width="stretch")
     else:
         st.markdown(
             '<div class="pg-callout">No results recorded yet. Seed demo data or run an authorized suite.</div>',
@@ -267,7 +315,7 @@ elif page == "Run Tests":
         if (not categories or test.owasp_category.value in categories)
         and (not severity or test.severity.value in severity)
     ]
-    metric_card("Selected Tests", len(selected), "blue")
+    metric_card("Selected Tests", len(selected), "")
     authorized = st.checkbox("I confirm I am authorized to test this target.")
     if st.button("Start Execution", disabled=not authorized):
         engine = ExecutionEngine(SessionFactory, max_concurrency=concurrency)
