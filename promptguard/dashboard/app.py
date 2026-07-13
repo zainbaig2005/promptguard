@@ -11,10 +11,11 @@ from sqlalchemy import select
 from promptguard.config import get_settings
 from promptguard.demo import seed_demo_sync
 from promptguard.execution.engine import ExecutionEngine
+from promptguard.models.schemas import TestSuite
 from promptguard.repositories.database import FindingRecord, TestResultRecord, TestRunRecord, init_database
 from promptguard.services.metrics import compare_runs, summarize_results
 from promptguard.target_loader import all_targets, target_by_id
-from promptguard.test_loader import load_suite
+from promptguard.test_loader import load_suite, load_suites
 
 st.set_page_config(page_title="PromptGuard", page_icon="PG", layout="wide")
 st.markdown(
@@ -33,6 +34,10 @@ SessionFactory = init_database(settings.database_url)
 def query_all(model):
     with SessionFactory() as session:
         return list(session.scalars(select(model)).all())
+
+
+def available_suites() -> list[TestSuite]:
+    return load_suites(Path("data/test_suites"))
 
 
 page = st.sidebar.radio(
@@ -87,7 +92,14 @@ if page == "Overview":
 
 elif page == "Run Tests":
     st.header("Run Tests")
-    suite = load_suite(Path("data/test_suites/owasp_2025_starter.yaml"))
+    suites = available_suites()
+    suite_by_id = {suite.id: suite for suite in suites}
+    suite_id = st.selectbox(
+        "Suite",
+        list(suite_by_id),
+        index=list(suite_by_id).index("gemini-smoke") if "gemini-smoke" in suite_by_id else 0,
+    )
+    suite = suite_by_id[suite_id]
     target_id = st.selectbox("Target", [target.id for target in all_targets()])
     categories = st.multiselect("OWASP categories", sorted({test.owasp_category.value for test in suite.tests}))
     severity = st.multiselect("Severity", sorted({test.severity.value for test in suite.tests}))
@@ -189,7 +201,9 @@ elif page == "Findings":
 
 elif page == "Test Library":
     st.header("Test Library")
-    suite = load_suite(Path("data/test_suites/owasp_2025_starter.yaml"))
+    suites = available_suites()
+    suite_by_id = {suite.id: suite for suite in suites}
+    suite = suite_by_id[st.selectbox("Suite", list(suite_by_id))]
     search = st.text_input("Search")
     rows = [
         test.model_dump(mode="json")
