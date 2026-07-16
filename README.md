@@ -79,7 +79,3 @@ or `.env`; both are ignored by default.
 ## Ethical Use
 
 Use PromptGuard only against systems you own or have explicit permission to test. The included content uses synthetic canaries and mock data. It does not implement credential theft, authentication bypass, stealth, destructive payloads, or automated attacks against third-party consumer services.
-
-## Resume-Ready Description
-
-Built PromptGuard, a Python 3.12 AI security validation framework with OWASP LLM Top 10 mapping, typed Pydantic models, SQLAlchemy persistence, deterministic target adapters and evaluators, Streamlit analytics, and professional report exports.
